@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: .
+      target: production
+      dockerfile: Dockerfile
+      labels:
+        - "service=app"
+        - "stage=production"
+    container_name: dextrading_nextjs
+    ports:
+      - "3019:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env.local
+
+  dev:
+    build:
+      context: .
+      target: dev
+      dockerfile: Dockerfile
+      labels:
+        - "service=dev"
+        - "stage=development"
+    container_name: dextrading_dev
+    ports:
+      - "3019:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env.local
+    command: ["yarn", "dev"]

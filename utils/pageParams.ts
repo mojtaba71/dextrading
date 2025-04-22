@@ -1,0 +1,9 @@
+export const TOKEN_PAGE_PARAMS = {
+  NETWORK: 0,
+  CONTRACT_ADDRESS: 1,
+};
+
+export const WALLET_PAGE_PARAMS = {
+  WALLET_ADDRESS: 0,
+  NETWORK: 1,
+};

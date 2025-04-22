@@ -1,0 +1,13 @@
+.square-timer-container {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: white;
+}
+
+.square-timer {
+  width: 0;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--brand);
+}

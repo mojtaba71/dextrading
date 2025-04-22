@@ -1,0 +1,45 @@
+:root {
+  --background: hsl(228, 26%, 100%);
+  --foreground: hsl(222.2 84% 4.9%);
+
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222.2 84% 4.9%);
+
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222.2 84% 4.9%);
+
+  --primary: hsl(222.2 47.4% 11.2%);
+  --primary-foreground: hsl(210 40% 98%);
+
+  --secondary: hsl(210 40% 96.1%);
+  // --secondary: hsl(0 0% 100%);
+  --secondary-foreground: hsl(222.2 47.4% 11.2%);
+  // --secondary-foreground: hsl(240, 47%, 26%);
+
+  --muted: hsl(210 40% 96.1%);
+  // --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --muted-foreground: hsl(217, 27%, 69%);
+
+  --accent: hsl(210 40% 96.1%);
+  --accent-foreground: hsl(222.2 47.4% 11.2%);
+
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(210 40% 98%);
+
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(222.2 84% 4.9%);
+
+  --radius: hsl(0.5rem);
+
+  --skeleton: hsl(0 0% 95%);
+  --brand: hsl(344, 75%, 67%);
+  --brand2: hsl(344, 51%, 48%);
+  --success: hsl(142, 70%, 50%);
+  --error: hsl(0, 83%, 68%);
+
+  --card-lighter: hsl(210, 40%, 96.08%);
+
+  --gradient-one: hsl(242, 79%, 98%);
+  --gradient-two: hsl(254, 79%, 98%);
+}
