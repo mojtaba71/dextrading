@@ -194,7 +194,7 @@ export default function TrendingPairs({
               <TableBody>
                 {hasLicense
                   ? trends!.data != undefined &&
-                    trends!.data.map((d) => (
+                    trends!.data.map((d: any) => (
                       <Record
                         key={d.id}
                         token={d}
@@ -204,7 +204,7 @@ export default function TrendingPairs({
                   : trends!.data != undefined &&
                     trends!.data
                       .slice(0, 15)
-                      .map((d) => (
+                      .map((d: any) => (
                         <Record
                           key={d.id}
                           token={d}

@@ -1,12 +1,11 @@
 import React from "react";
 
-function Divider({
-  height = 1,
-  className = "",
-}: {
-  height: number;
+type DividerProps = {
+  height?: number;
   className?: string;
-}) {
+};
+
+function Divider({ height = 1, className = "" }: DividerProps) {
   return (
     <div className="w-full flex items-center justify-center my-6">
       <div
