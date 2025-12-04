@@ -25,16 +25,7 @@ function SolanaSwapButton({
     }
   }, [publicKey, onConnected]);
 
-  return (
-    <>
-      <WalletMultiButton>
-        {/* {wallet?.adapter.publicKey
-          ? `${wallet.adapter.publicKey.toBase58().substring(0, 7)}...`
-          : "Connect Wallet"} */}
-          Connect Wallet
-      </WalletMultiButton>
-    </>
-  );
+  return <WalletMultiButton />;
 }
 
 export default SolanaSwapButton;
