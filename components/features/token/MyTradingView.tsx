@@ -21,7 +21,7 @@ const chartResolutions = [
   "10", "15", "30", "60", "240", "480", "720", "1440", "3D", "W", "M",
 ] as ResolutionString[];
 
-// TradingView گاهی "D"/"1D" و "1W"/"1M" هم می‌فرسته — همه رو map می‌کنیم
+// TradingView alias resolutions like "D"/"1D", "1W"/"1M" are all mapped here
 const chartSecondsPerResolution: Record<string, number> = {
   "10":   10 * 60,
   "15":   15 * 60,
@@ -74,7 +74,7 @@ function getOhlcvFromFeed(feed: IDatafeed): IOhlcvData[] {
     .sort((a, b) => a.time - b.time);
 }
 
-// merge سه dataset با اولویت: day > hour > minute برای timestamp های مشترک
+// Merges minute/hour/day datasets — for overlapping timestamps, day takes priority over hour over minute
 function mergeOhlcv(
   minuteData: IOhlcvData[],
   hourData: IOhlcvData[],
@@ -107,7 +107,7 @@ function mergeOhlcv(
   return merged;
 }
 
-// برای توکن‌های compare: 3 API call موازی + merge برای پوشش کامل تاریخچه
+// Fetches full OHLCV history for a compare token via 3 parallel API calls (day/hour/minute) then merges them
 async function fetchFullOhlcv(address: string, network: string): Promise<{ data: IOhlcvData[]; meta: IDatafeed["meta"] | null }> {
   const [dayFeed, hourFeed, minuteFeed] = await Promise.all([
     getDataFeed({ params: { contractAddress: address, network, timeframe: "day", aggregate: 1 } }),
@@ -125,8 +125,7 @@ async function fetchFullOhlcv(address: string, network: string): Promise<{ data:
   };
 }
 
-// ─── فرمت قیمت با نماد subscript برای قیمت‌های خیلی کوچیک ─────────────────
-// مثال: 0.000000942 → "0.0₆942"
+// Formats tiny prices using subscript zero notation: 0.000000942 → "0.0₆942"
 const SUBSCRIPT_DIGITS: Record<string, string> = {
   "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄",
   "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉",
@@ -184,13 +183,12 @@ function createCryptoPriceFormatter(): ISymbolValueFormatter {
   };
 }
 
-// فرمت ticker برای compare: "poolName / network / address"
 function buildCompareTicker(poolName: string, network: string, address: string): string {
   return `${poolName.trim()} / ${network} / ${address}`;
 }
 
-// اگه ticker فرمت compare داشته باشه، آخرین دو بخش رو address و network برمی‌گردونه
-// این روش با نام‌های پیچیده مثل "BIBI / WBNB / bsc / 0xABC" هم کار می‌کنه
+// Detects compare ticker format ("Name / network / address") and extracts the last two parts.
+// Taking from the end handles complex pool names like "BIBI / WBNB / bsc / 0xABC..."
 function parseCompareTicker(ticker: string): { address: string; network: string } | null {
   if (!ticker?.trim()) return null;
   const parts = ticker.split(" / ").map((p) => p.trim());
@@ -379,7 +377,7 @@ interface Props {
 
 const DAILY_RESOLUTIONS = new Set(["1440", "D", "1D", "3D", "W", "1W", "M", "1M"]);
 
-// کش داده compare — برای جلوگیری از fetch مجدد هنگام تغییر resolution
+// Module-level cache for compare token bars — persists across resolution changes
 const compareBarsCache = new Map<string, IOhlcvData[]>();
 
 const MyTradingView = ({
@@ -448,8 +446,8 @@ const MyTradingView = ({
 
         if (!parsed) {
           setTimeout(() => {
-            // hour-based (≥60min): dayData قدیمی + hourData اخیر را ترکیب می‌کنیم
-            // چون hourData فقط ~۸ روز تاریخچه دارد ولی dayData تا ~۱۰۰ روز دارد
+            // For hour-based resolutions (≥60min): prepend dayData history before hourData starts.
+            // The hour API returns ~8 days while dayData covers ~100 days — combining prevents left-side gaps.
             let sourceData: IOhlcvData[];
             if (DAILY_RESOLUTIONS.has(resolution)) {
               sourceData = dayData;
@@ -477,8 +475,8 @@ const MyTradingView = ({
                 volume: bar.volume,
               }));
 
-            // noData=true فقط وقتی که بازه درخواستی کاملاً قبل از اولین bar ماست
-            // در غیر این صورت TradingView gap ایجاد می‌کند
+            // Only signal noData=true when the requested range is entirely before our first bar.
+            // Returning noData=true prematurely causes TradingView to render visual gaps.
             const firstBarTime = aggregated.length > 0 ? aggregated[0].time : null;
             const noData = bars.length === 0 && (firstBarTime === null || periodParams.to < firstBarTime);
             onResult(bars, { noData });
@@ -638,15 +636,15 @@ const MyTradingView = ({
   const handleCompareSelect = async (result: CompareResult) => {
     if (!myWidget.current || !chartIsReady) return;
 
-    // داده compare رو قبل از createStudy fetch و cache می‌کنیم
-    // تا وقتی TradingView getBars صدا زد داده آماده باشه
+    // Pre-fetch and cache compare data before calling createStudy,
+    // so bars are ready synchronously when TradingView calls getBars.
     const cacheKey = `${result.poolAddress}_${result.network}`;
     if (!compareBarsCache.has(cacheKey)) {
       try {
         const { data } = await fetchFullOhlcv(result.poolAddress, result.network);
         compareBarsCache.set(cacheKey, data);
       } catch {
-        // اگه fetch شکست خورد، TradingView خودش getBars می‌زنه
+        // If fetch fails, TradingView will call getBars and handle it there
       }
     }
 
