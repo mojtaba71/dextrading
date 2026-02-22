@@ -1,6 +1,6 @@
 "use client";
 import Script from "next/script";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 import {
   ChartingLibraryWidgetOptions,
@@ -75,6 +75,7 @@ interface Props {
   tokenExchange: string;
 }
 
+
 export default function Chart({
   tokenAddress,
   network,
@@ -130,84 +131,24 @@ export default function Chart({
       .sort((a, b) => a.time - b.time);
   };
 
-  const mergeData = (
-    minuteData: IOhlcvData[],
-    hourData: IOhlcvData[],
-    dayData: IOhlcvData[]
-  ): IOhlcvData[] => {
-    const mergedData: IOhlcvData[] = [];
-    let i = 0,
-      j = 0,
-      k = 0;
 
-    while (i < minuteData.length || j < hourData.length || k < dayData.length) {
-      const minuteTime = i < minuteData.length ? minuteData[i].time : Infinity;
-      const hourTime = j < hourData.length ? hourData[j].time : Infinity;
-      const dayTime = k < dayData.length ? dayData[k].time : Infinity;
-
-      const minTime = Math.min(minuteTime, hourTime, dayTime);
-
-      if (
-        minuteTime === minTime &&
-        hourTime === minTime &&
-        dayTime === minTime
-      ) {
-        mergedData.push(dayData[k]); // Prefer dayData when all match
-        i++;
-        j++;
-        k++;
-      } else if (hourTime === minTime && minuteTime === minTime) {
-        mergedData.push(hourData[j]); // Prefer hourData over minuteData
-        i++;
-        j++;
-      } else if (dayTime === minTime && hourTime === minTime) {
-        mergedData.push(dayData[k]); // Prefer dayData over hourData
-        j++;
-        k++;
-      } else if (dayTime === minTime) {
-        mergedData.push(dayData[k]);
-        k++;
-      } else if (hourTime === minTime) {
-        mergedData.push(hourData[j]);
-        j++;
-      } else if (minuteTime === minTime) {
-        mergedData.push(minuteData[i]);
-        i++;
-      }
-    }
-
-    return mergedData;
-  };
+  const minuteData = useMemo(
+    () => (isMinuteDataSuccess && minuteDatafeed ? getOhlcvData(minuteDatafeed) : []),
+    [minuteDatafeed, isMinuteDataSuccess]
+  );
+  const hourData = useMemo(
+    () => (isHourDataSuccess && hourDatafeed ? getOhlcvData(hourDatafeed) : []),
+    [hourDatafeed, isHourDataSuccess]
+  );
+  const dayData = useMemo(
+    () => (isDayDataSuccess && dayDatafeed ? getOhlcvData(dayDatafeed) : []),
+    [dayDatafeed, isDayDataSuccess]
+  );
 
   const isSuccess = useMemo(
     () => isMinuteDataSuccess && isHourDataSuccess && isDayDataSuccess,
     [isMinuteDataSuccess, isHourDataSuccess, isDayDataSuccess]
   );
-
-  const [ohlcvData, setOhlcvData] = useState<any>([]);
-  useEffect(() => {
-    console.log("triggered | data changed");
-    // Define the resolutions that should use only the daily data
-    const dailyResolutions = ["1440", "D", "3D", "W", "M"];
-    // Provide a fallback value in case defaultWidgetProps.interval is undefined.
-    const currentInterval = defaultWidgetProps.interval || "4H";
-
-    if (dailyResolutions.includes(currentInterval)) {
-      // For daily or higher resolutions, use only the day data from the API
-      setOhlcvData(isSuccess ? getOhlcvData(dayDatafeed!) : []);
-    } else {
-      // For lower resolutions, merge minute, hour, and day data
-      setOhlcvData(
-        isSuccess
-          ? mergeData(
-              getOhlcvData(minuteDatafeed!),
-              getOhlcvData(hourDatafeed!),
-              getOhlcvData(dayDatafeed!)
-            )
-          : []
-      );
-    }
-  }, [minuteDatafeed, hourDatafeed, dayDatafeed, isSuccess]);
 
   const { theme } = useTheme();
 
@@ -221,7 +162,7 @@ export default function Chart({
           setIsScriptReady(true);
         }}
       />
-      {isSuccess && ohlcvData.length > 0 ? (
+      {isSuccess && dayData.length > 0 ? (
         <div className="h-full w-full my-6 md:my-7">
           <MyTradingView
             chartOptions={{
@@ -231,8 +172,10 @@ export default function Chart({
                 "/" +
                 minuteDatafeed!.meta.quote.symbol,
             }}
-            ohlcvData={ohlcvData}
-            theme={theme === "dark" ? "dark" : "light"}
+            minuteData={minuteData}
+            hourData={hourData}
+            dayData={dayData}
+            theme={theme === "light" ? "light" : "dark"}
             tokenExchange={tokenExchange}
             tokenDescription={tokenDescription}
           />
